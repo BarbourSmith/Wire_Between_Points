@@ -1,13 +1,41 @@
 {
-    "atomType": "Molecule",
-    "x": 0,
-    "y": 0,
-    "uniqueID": "id-9638",
-    "name": "Wire_Between_Points",
-    "topLevel": true,
-    "allAtoms": [],
-    "allConnectors": [],
-    "unitsKey": "MM",
-    "fileTypeVersion": 1,
-    "filetypeVersion": 1
+  "atomType": "Molecule",
+  "x": 0,
+  "y": 0,
+  "uniqueID": "id-9638",
+  "name": "Wire_Between_Points",
+  "topLevel": true,
+  "allAtoms": [
+    {
+      "atomType": "Output",
+      "x": 0.98,
+      "y": 0.5,
+      "uniqueID": "id-9639",
+      "ioValues": [
+        {
+          "name": "number or geometry",
+          "ioValue": "__GEOMETRY_INPUT__"
+        }
+      ]
+    },
+    {
+      "atomType": "Code",
+      "x": 0.6,
+      "y": 0.5,
+      "uniqueID": "id-9739",
+      "interpreterVersion": 1,
+      "code": "function run(): Assembly {\n  const oc = replicad.getOC();\n  const curves: [string, number[][]][] = [\n    [\"arch\", [[0, 0, 0], [0, 0, 50], [100, 0, 50], [100, 0, 0]]],\n    [\"straight\", [[0, 0, 0], [0, 0, 30], [0, 0, 60], [0, 0, 100]]],\n    [\"S3d\", [[0, 0, 0], [0, 0, 60], [100, 40, -60], [100, 40, 20]]],\n  ];\n  const sweepDiscrete = (profile: any, spine: any) => {\n    const b = new oc.BRepOffsetAPI_MakePipeShell(spine.wrapped);\n    b.SetDiscreteMode();\n    b.Add(profile.wrapped, false, true);\n    b.Build();\n    b.MakeSolid();\n    const s = replicad.cast(b.Shape());\n    b.delete();\n    return s;\n  };\n  let keep: any = null;\n  for (const [name, pts] of curves) {\n    const spine = replicad.assembleWire([replicad.makeBezierCurve(pts)]);\n    const t = spine.tangentAt(0);\n    const circ = () => replicad.assembleWire([replicad.makeCircle(1.5, pts[0], [t.x, t.y, t.z])]);\n    for (const mode of [\"frenet\", \"discrete\"]) {\n      try {\n        const s = mode === \"frenet\"\n          ? replicad.genericSweep(circ(), spine, { frenet: true })\n          : sweepDiscrete(circ(), spine);\n        console.log(name, mode, \"OK\", s.constructor.name, JSON.stringify(s.boundingBox.bounds));\n        if (name === \"S3d\" && mode === \"discrete\") keep = s;\n      } catch (e) {\n        console.log(name, mode, \"FAIL\", String(e?.message ?? e));\n      }\n    }\n  }\n  return new Assembly({ geometry: keep ?? replicad.makeSphere(1) });\n}\n",
+      "compiledCode": "\"use strict\";\nfunction run() {\n    const oc = replicad.getOC();\n    const curves = [\n        [\"arch\", [[0, 0, 0], [0, 0, 50], [100, 0, 50], [100, 0, 0]]],\n        [\"straight\", [[0, 0, 0], [0, 0, 30], [0, 0, 60], [0, 0, 100]]],\n        [\"S3d\", [[0, 0, 0], [0, 0, 60], [100, 40, -60], [100, 40, 20]]],\n    ];\n    const sweepDiscrete = (profile, spine) => {\n        const b = new oc.BRepOffsetAPI_MakePipeShell(spine.wrapped);\n        b.SetDiscreteMode();\n        b.Add(profile.wrapped, false, true);\n        b.Build();\n        b.MakeSolid();\n        const s = replicad.cast(b.Shape());\n        b.delete();\n        return s;\n    };\n    let keep = null;\n    for (const [name, pts] of curves) {\n        const spine = replicad.assembleWire([replicad.makeBezierCurve(pts)]);\n        const t = spine.tangentAt(0);\n        const circ = () => replicad.assembleWire([replicad.makeCircle(1.5, pts[0], [t.x, t.y, t.z])]);\n        for (const mode of [\"frenet\", \"discrete\"]) {\n            try {\n                const s = mode === \"frenet\"\n                    ? replicad.genericSweep(circ(), spine, { frenet: true })\n                    : sweepDiscrete(circ(), spine);\n                console.log(name, mode, \"OK\", s.constructor.name, JSON.stringify(s.boundingBox.bounds));\n                if (name === \"S3d\" && mode === \"discrete\")\n                    keep = s;\n            }\n            catch (e) {\n                console.log(name, mode, \"FAIL\", String(e?.message ?? e));\n            }\n        }\n    }\n    return new Assembly({ geometry: keep ?? replicad.makeSphere(1) });\n}\n"
+    }
+  ],
+  "allConnectors": [
+    {
+      "ap2Name": "number or geometry",
+      "ap1ID": "id-9739",
+      "ap2ID": "id-9639"
+    }
+  ],
+  "unitsKey": "MM",
+  "fileTypeVersion": 1,
+  "filetypeVersion": 1
 }
