@@ -8,11 +8,6 @@
 
 - **Start Shape** (geometry)
 - **End Shape** (geometry)
-- **Start Point** (array)
-- **Start Direction** (array)
-- **End Point** (array)
-- **End Direction** (array)
-- **Wire Diameter** (number)
 - **Stiffness** (number)
 - **Flip Start** (boolean)
 - **Flip End** (boolean)
