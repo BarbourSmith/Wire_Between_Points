@@ -4,6 +4,54 @@
   "y": 0,
   "uniqueID": "id-9638",
   "name": "Wire_Between_Points",
+  "ioValues": [
+    {
+      "name": "Start Shape",
+      "ioValue": 10
+    },
+    {
+      "name": "End Shape",
+      "ioValue": 10
+    },
+    {
+      "name": "Start Point",
+      "ioValue": []
+    },
+    {
+      "name": "Start Direction",
+      "ioValue": []
+    },
+    {
+      "name": "End Point",
+      "ioValue": []
+    },
+    {
+      "name": "End Direction",
+      "ioValue": []
+    },
+    {
+      "name": "Via Points",
+      "ioValue": ""
+    },
+    {
+      "name": "Wire Diameter",
+      "ioValue": 3,
+      "currentEquation": "3"
+    },
+    {
+      "name": "Stiffness",
+      "ioValue": 0.5,
+      "currentEquation": "0.5"
+    },
+    {
+      "name": "Flip Start",
+      "ioValue": false
+    },
+    {
+      "name": "Flip End",
+      "ioValue": false
+    }
+  ],
   "topLevel": true,
   "allAtoms": [
     {
@@ -23,15 +71,235 @@
       "x": 0.6,
       "y": 0.5,
       "uniqueID": "id-9739",
+      "ioValues": [
+        {
+          "name": "startShape",
+          "ioValue": 10
+        },
+        {
+          "name": "endShape",
+          "ioValue": 10
+        },
+        {
+          "name": "startPoint",
+          "ioValue": []
+        },
+        {
+          "name": "startDirection",
+          "ioValue": []
+        },
+        {
+          "name": "endPoint",
+          "ioValue": []
+        },
+        {
+          "name": "endDirection",
+          "ioValue": []
+        },
+        {
+          "name": "viaPoints",
+          "ioValue": ""
+        },
+        {
+          "name": "wireDiameter",
+          "ioValue": 3
+        },
+        {
+          "name": "stiffness",
+          "ioValue": 0.5
+        },
+        {
+          "name": "flipStart",
+          "ioValue": false
+        },
+        {
+          "name": "flipEnd",
+          "ioValue": false
+        }
+      ],
       "interpreterVersion": 1,
-      "code": "function run(): Assembly {\n  const oc = replicad.getOC();\n  const curves: [string, number[][]][] = [\n    [\"arch\", [[0, 0, 0], [0, 0, 50], [100, 0, 50], [100, 0, 0]]],\n    [\"straight\", [[0, 0, 0], [0, 0, 30], [0, 0, 60], [0, 0, 100]]],\n    [\"S3d\", [[0, 0, 0], [0, 0, 60], [100, 40, -60], [100, 40, 20]]],\n  ];\n  const sweepDiscrete = (profile: any, spine: any) => {\n    const b = new oc.BRepOffsetAPI_MakePipeShell(spine.wrapped);\n    b.SetDiscreteMode();\n    b.Add(profile.wrapped, false, true);\n    b.Build();\n    b.MakeSolid();\n    const s = replicad.cast(b.Shape());\n    b.delete();\n    return s;\n  };\n  let keep: any = null;\n  for (const [name, pts] of curves) {\n    const spine = replicad.assembleWire([replicad.makeBezierCurve(pts)]);\n    const t = spine.tangentAt(0);\n    const circ = () => replicad.assembleWire([replicad.makeCircle(1.5, pts[0], [t.x, t.y, t.z])]);\n    for (const mode of [\"frenet\", \"discrete\"]) {\n      try {\n        const s = mode === \"frenet\"\n          ? replicad.genericSweep(circ(), spine, { frenet: true })\n          : sweepDiscrete(circ(), spine);\n        console.log(name, mode, \"OK\", s.constructor.name, JSON.stringify(s.boundingBox.bounds));\n        if (name === \"S3d\" && mode === \"discrete\") keep = s;\n      } catch (e) {\n        console.log(name, mode, \"FAIL\", String(e?.message ?? e));\n      }\n    }\n  }\n  return new Assembly({ geometry: keep ?? replicad.makeSphere(1) });\n}\n",
-      "compiledCode": "\"use strict\";\nfunction run() {\n    const oc = replicad.getOC();\n    const curves = [\n        [\"arch\", [[0, 0, 0], [0, 0, 50], [100, 0, 50], [100, 0, 0]]],\n        [\"straight\", [[0, 0, 0], [0, 0, 30], [0, 0, 60], [0, 0, 100]]],\n        [\"S3d\", [[0, 0, 0], [0, 0, 60], [100, 40, -60], [100, 40, 20]]],\n    ];\n    const sweepDiscrete = (profile, spine) => {\n        const b = new oc.BRepOffsetAPI_MakePipeShell(spine.wrapped);\n        b.SetDiscreteMode();\n        b.Add(profile.wrapped, false, true);\n        b.Build();\n        b.MakeSolid();\n        const s = replicad.cast(b.Shape());\n        b.delete();\n        return s;\n    };\n    let keep = null;\n    for (const [name, pts] of curves) {\n        const spine = replicad.assembleWire([replicad.makeBezierCurve(pts)]);\n        const t = spine.tangentAt(0);\n        const circ = () => replicad.assembleWire([replicad.makeCircle(1.5, pts[0], [t.x, t.y, t.z])]);\n        for (const mode of [\"frenet\", \"discrete\"]) {\n            try {\n                const s = mode === \"frenet\"\n                    ? replicad.genericSweep(circ(), spine, { frenet: true })\n                    : sweepDiscrete(circ(), spine);\n                console.log(name, mode, \"OK\", s.constructor.name, JSON.stringify(s.boundingBox.bounds));\n                if (name === \"S3d\" && mode === \"discrete\")\n                    keep = s;\n            }\n            catch (e) {\n                console.log(name, mode, \"FAIL\", String(e?.message ?? e));\n            }\n        }\n    }\n    return new Assembly({ geometry: keep ?? replicad.makeSphere(1) });\n}\n"
+      "code": "/**\n * A round wire (or cable, hose, tube) routed smoothly between two ends.\n *\n * Each end is a point and the direction the wire leaves that end in, like a\n * wire coming straight out of a terminal. Pick a round edge on the Start /\n * End Shape (a hole rim, the end of a pin) to put the end at its center,\n * leaving along its axis; a straight edge puts the end at its middle and\n * keeps the direction input. With nothing picked, the point and direction\n * inputs are used.\n *\n * Via Points guide the middle: \"x,y,z\" or \"x,y,z,dx,dy,dz\" separated by \";\".\n * A via point without a direction gets a smooth one from its neighbors.\n *\n * The centerline is a chain of cubic Bezier curves that meet with matching\n * tangents, and a circle of the wire's diameter is swept along it.\n */\ntype V = [number, number, number];\n\nconst add = (a: V, b: V): V => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];\nconst sub = (a: V, b: V): V => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];\nconst mul = (a: V, k: number): V => [a[0] * k, a[1] * k, a[2] * k];\nconst dot = (a: V, b: V) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];\nconst cross = (a: V, b: V): V => [\n  a[1] * b[2] - a[2] * b[1],\n  a[2] * b[0] - a[0] * b[2],\n  a[0] * b[1] - a[1] * b[0],\n];\nconst len = (a: V) => Math.sqrt(dot(a, a));\nconst unit = (a: V, name = \"A direction\"): V => {\n  const l = len(a);\n  if (l < 1e-9) throw new Error(`${name} can't be zero length.`);\n  return mul(a, 1 / l);\n};\nconst vec = (p: any): V => [p.x ?? p[0], p.y ?? p[1], p.z ?? p[2]];\n\n/** A point or direction input; an empty one (not set yet) uses the default. */\nfunction toV(arr: number[], name: string, fallback: V): V {\n  if (arr === undefined || arr === null || (Array.isArray(arr) && arr.length === 0)) return fallback;\n  if (!Array.isArray(arr) || arr.length < 3 || arr.some((n) => !Number.isFinite(Number(n))))\n    throw new Error(`${name} needs three numbers [x, y, z].`);\n  return [Number(arr[0]), Number(arr[1]), Number(arr[2])];\n}\n\n/** Center and axis of a round edge from three points on it; null if straight. */\nfunction circleOf(edge: any): { center: V; axis: V } | null {\n  const a = vec(edge.pointAt(0));\n  const b = vec(edge.pointAt(1 / 3));\n  const c = vec(edge.pointAt(2 / 3));\n  const ab = sub(b, a);\n  const ac = sub(c, a);\n  const n = cross(ab, ac);\n  const n2 = dot(n, n);\n  if (n2 < 1e-12 * dot(ab, ab) * dot(ac, ac)) return null; // collinear: straight edge\n  // Circumcenter of triangle abc\n  const center = add(\n    a,\n    mul(add(mul(cross(n, ab), dot(ac, ac)), mul(cross(ac, n), dot(ab, ab))), 1 / (2 * n2)),\n  );\n  return { center, axis: unit(n) };\n}\n\n/** An end from the first picked edge on a shape, or null when nothing is picked. */\nfunction endFromPick(shape: Assembly | undefined, label: string) {\n  // An edge input with nothing wired in passes a number, not a shape.\n  if (!shape || typeof (shape as any).getSelectedEdges !== \"function\") return null;\n  const edges = shape.getSelectedEdges();\n  if (!edges || edges.length === 0) return null;\n  if (edges.length > 1)\n    console.warn(`${label}: ${edges.length} edges picked; using the first.`);\n  const edge = edges[0];\n  const circle = circleOf(edge);\n  if (circle) return { point: circle.center, axis: circle.axis as V | null };\n  return { point: vec(edge.pointAt(0.5)), axis: null };\n}\n\nfunction parseVias(text: string) {\n  const vias: { point: V; dir: V | null }[] = [];\n  for (const chunk of String(text ?? \"\").split(\";\")) {\n    if (!chunk.trim()) continue;\n    const nums = chunk.split(/[\\s,]+/).filter((s) => s !== \"\").map(Number);\n    if ((nums.length !== 3 && nums.length !== 6) || nums.some((n) => !Number.isFinite(n)))\n      throw new Error(\n        `Via point \"${chunk.trim()}\" needs 3 numbers (x,y,z) or 6 (x,y,z,dx,dy,dz).`,\n      );\n    vias.push({\n      point: [nums[0], nums[1], nums[2]],\n      dir: nums.length === 6 ? unit([nums[3], nums[4], nums[5]], \"A via direction\") : null,\n    });\n  }\n  return vias;\n}\n\n/** Sweep a closed profile along a spine with OpenCascade's discrete trihedron. */\nfunction sweepDiscrete(profile: any, spine: any) {\n  const oc = replicad.getOC();\n  const builder = new oc.BRepOffsetAPI_MakePipeShell(spine.wrapped);\n  try {\n    builder.SetDiscreteMode();\n    builder.Add(profile.wrapped, false, true);\n    builder.Build();\n    builder.MakeSolid();\n    return replicad.cast(builder.Shape());\n  } finally {\n    builder.delete();\n  }\n}\n\nfunction run(\n  startShape: Assembly | undefined = undefined, // pick a round edge to start from\n  endShape: Assembly | undefined = undefined, // pick a round edge to end at\n  startPoint: number[] = [0, 0, 0],\n  startDirection: number[] = [0, 0, 1], // the way the wire leaves the start\n  endPoint: number[] = [100, 0, 0],\n  endDirection: number[] = [0, 0, 1], // the way the wire leaves the end (out of its terminal)\n  viaPoints: string = \"\", // \"x,y,z; x,y,z,dx,dy,dz; ...\"\n  wireDiameter: number = 3,\n  stiffness: number = 0.5, // how far the wire runs straight before bending\n  flipStart: boolean = false, // reverse the picked start edge's axis\n  flipEnd: boolean = false, // reverse the picked end edge's axis\n): Assembly {\n  const diameter = Number(wireDiameter);\n  const stiff = Number(stiffness);\n  if (!(diameter > 0)) throw new Error(\"Wire Diameter must be more than 0.\");\n  if (!(stiff > 0)) throw new Error(\"Stiffness must be more than 0.\");\n\n  const vias = parseVias(viaPoints);\n  const startPick = endFromPick(startShape, \"Start\");\n  const endPick = endFromPick(endShape, \"End\");\n\n  const p0: V = startPick ? startPick.point : toV(startPoint, \"Start Point\", [0, 0, 0]);\n  const p1: V = endPick ? endPick.point : toV(endPoint, \"End Point\", [100, 0, 0]);\n\n  // A picked round edge's axis could point either way: aim it toward where the\n  // wire is going (the next point), then let the flip toggle reverse it.\n  const aim = (axis: V | null, input: number[], from: V, toward: V, flip: boolean, name: string) => {\n    let d = axis ?? unit(toV(input, name, [0, 0, 1]), name);\n    if (axis && dot(d, sub(toward, from)) < 0) d = mul(d, -1);\n    return flip === true ? mul(d, -1) : d;\n  };\n  const firstTarget = vias.length ? vias[0].point : p1;\n  const lastTarget = vias.length ? vias[vias.length - 1].point : p0;\n  const d0 = aim(startPick?.axis ?? null, startDirection, p0, firstTarget, flipStart, \"Start Direction\");\n  const d1 = aim(endPick?.axis ?? null, endDirection, p1, lastTarget, flipEnd, \"End Direction\");\n\n  // Points along the wire and the direction of travel at each.\n  const pts: V[] = [p0, ...vias.map((v) => v.point), p1];\n  const tans: (V | null)[] = [d0, ...vias.map((v) => v.dir), mul(d1, -1)];\n  for (let i = 1; i < pts.length - 1; i++) {\n    if (!tans[i]) tans[i] = unit(sub(pts[i + 1], pts[i - 1]), \"Via points\");\n  }\n  for (let i = 0; i < pts.length - 1; i++) {\n    if (len(sub(pts[i + 1], pts[i])) < 1e-6)\n      throw new Error(\"Two points along the wire are in the same place.\");\n  }\n\n  // One cubic Bezier per gap; control points sit along each tangent, a\n  // stiffness fraction of the gap away, so the curves meet smoothly.\n  const edges = [];\n  for (let i = 0; i < pts.length - 1; i++) {\n    const a = pts[i];\n    const b = pts[i + 1];\n    const reach = len(sub(b, a)) * stiff;\n    edges.push(\n      replicad.makeBezierCurve([a, add(a, mul(tans[i] as V, reach)), sub(b, mul(tans[i + 1] as V, reach)), b]),\n    );\n  }\n  const spine = replicad.assembleWire(edges);\n\n  // Sweep a circle, square to the start direction, along the centerline.\n  const profile = () => replicad.assembleWire([replicad.makeCircle(diameter / 2, p0, d0)]);\n  let wire;\n  try {\n    wire = sweepDiscrete(profile(), spine);\n  } catch (e) {\n    // The default (corrected Frenet) mode fails on these curves; Frenet works\n    // where the discrete trihedron doesn't.\n    wire = replicad.genericSweep(profile(), spine, { frenet: true });\n  }\n\n  const length = replicad.measureLength(spine);\n  console.log(`Wire length: ${length.toFixed(1)}`);\n\n  return new Assembly({ geometry: wire, tags: [\"wire\"] });\n}\n",
+      "compiledCode": "\"use strict\";\nconst add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];\nconst sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];\nconst mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];\nconst dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];\nconst cross = (a, b) => [\n    a[1] * b[2] - a[2] * b[1],\n    a[2] * b[0] - a[0] * b[2],\n    a[0] * b[1] - a[1] * b[0],\n];\nconst len = (a) => Math.sqrt(dot(a, a));\nconst unit = (a, name = \"A direction\") => {\n    const l = len(a);\n    if (l < 1e-9)\n        throw new Error(`${name} can't be zero length.`);\n    return mul(a, 1 / l);\n};\nconst vec = (p) => [p.x ?? p[0], p.y ?? p[1], p.z ?? p[2]];\n/** A point or direction input; an empty one (not set yet) uses the default. */\nfunction toV(arr, name, fallback) {\n    if (arr === undefined || arr === null || (Array.isArray(arr) && arr.length === 0))\n        return fallback;\n    if (!Array.isArray(arr) || arr.length < 3 || arr.some((n) => !Number.isFinite(Number(n))))\n        throw new Error(`${name} needs three numbers [x, y, z].`);\n    return [Number(arr[0]), Number(arr[1]), Number(arr[2])];\n}\n/** Center and axis of a round edge from three points on it; null if straight. */\nfunction circleOf(edge) {\n    const a = vec(edge.pointAt(0));\n    const b = vec(edge.pointAt(1 / 3));\n    const c = vec(edge.pointAt(2 / 3));\n    const ab = sub(b, a);\n    const ac = sub(c, a);\n    const n = cross(ab, ac);\n    const n2 = dot(n, n);\n    if (n2 < 1e-12 * dot(ab, ab) * dot(ac, ac))\n        return null; // collinear: straight edge\n    // Circumcenter of triangle abc\n    const center = add(a, mul(add(mul(cross(n, ab), dot(ac, ac)), mul(cross(ac, n), dot(ab, ab))), 1 / (2 * n2)));\n    return { center, axis: unit(n) };\n}\n/** An end from the first picked edge on a shape, or null when nothing is picked. */\nfunction endFromPick(shape, label) {\n    // An edge input with nothing wired in passes a number, not a shape.\n    if (!shape || typeof shape.getSelectedEdges !== \"function\")\n        return null;\n    const edges = shape.getSelectedEdges();\n    if (!edges || edges.length === 0)\n        return null;\n    if (edges.length > 1)\n        console.warn(`${label}: ${edges.length} edges picked; using the first.`);\n    const edge = edges[0];\n    const circle = circleOf(edge);\n    if (circle)\n        return { point: circle.center, axis: circle.axis };\n    return { point: vec(edge.pointAt(0.5)), axis: null };\n}\nfunction parseVias(text) {\n    const vias = [];\n    for (const chunk of String(text ?? \"\").split(\";\")) {\n        if (!chunk.trim())\n            continue;\n        const nums = chunk.split(/[\\s,]+/).filter((s) => s !== \"\").map(Number);\n        if ((nums.length !== 3 && nums.length !== 6) || nums.some((n) => !Number.isFinite(n)))\n            throw new Error(`Via point \"${chunk.trim()}\" needs 3 numbers (x,y,z) or 6 (x,y,z,dx,dy,dz).`);\n        vias.push({\n            point: [nums[0], nums[1], nums[2]],\n            dir: nums.length === 6 ? unit([nums[3], nums[4], nums[5]], \"A via direction\") : null,\n        });\n    }\n    return vias;\n}\n/** Sweep a closed profile along a spine with OpenCascade's discrete trihedron. */\nfunction sweepDiscrete(profile, spine) {\n    const oc = replicad.getOC();\n    const builder = new oc.BRepOffsetAPI_MakePipeShell(spine.wrapped);\n    try {\n        builder.SetDiscreteMode();\n        builder.Add(profile.wrapped, false, true);\n        builder.Build();\n        builder.MakeSolid();\n        return replicad.cast(builder.Shape());\n    }\n    finally {\n        builder.delete();\n    }\n}\nfunction run(startShape = undefined, // pick a round edge to start from\nendShape = undefined, // pick a round edge to end at\nstartPoint = [0, 0, 0], startDirection = [0, 0, 1], // the way the wire leaves the start\nendPoint = [100, 0, 0], endDirection = [0, 0, 1], // the way the wire leaves the end (out of its terminal)\nviaPoints = \"\", // \"x,y,z; x,y,z,dx,dy,dz; ...\"\nwireDiameter = 3, stiffness = 0.5, // how far the wire runs straight before bending\nflipStart = false, // reverse the picked start edge's axis\nflipEnd = false) {\n    const diameter = Number(wireDiameter);\n    const stiff = Number(stiffness);\n    if (!(diameter > 0))\n        throw new Error(\"Wire Diameter must be more than 0.\");\n    if (!(stiff > 0))\n        throw new Error(\"Stiffness must be more than 0.\");\n    const vias = parseVias(viaPoints);\n    const startPick = endFromPick(startShape, \"Start\");\n    const endPick = endFromPick(endShape, \"End\");\n    const p0 = startPick ? startPick.point : toV(startPoint, \"Start Point\", [0, 0, 0]);\n    const p1 = endPick ? endPick.point : toV(endPoint, \"End Point\", [100, 0, 0]);\n    // A picked round edge's axis could point either way: aim it toward where the\n    // wire is going (the next point), then let the flip toggle reverse it.\n    const aim = (axis, input, from, toward, flip, name) => {\n        let d = axis ?? unit(toV(input, name, [0, 0, 1]), name);\n        if (axis && dot(d, sub(toward, from)) < 0)\n            d = mul(d, -1);\n        return flip === true ? mul(d, -1) : d;\n    };\n    const firstTarget = vias.length ? vias[0].point : p1;\n    const lastTarget = vias.length ? vias[vias.length - 1].point : p0;\n    const d0 = aim(startPick?.axis ?? null, startDirection, p0, firstTarget, flipStart, \"Start Direction\");\n    const d1 = aim(endPick?.axis ?? null, endDirection, p1, lastTarget, flipEnd, \"End Direction\");\n    // Points along the wire and the direction of travel at each.\n    const pts = [p0, ...vias.map((v) => v.point), p1];\n    const tans = [d0, ...vias.map((v) => v.dir), mul(d1, -1)];\n    for (let i = 1; i < pts.length - 1; i++) {\n        if (!tans[i])\n            tans[i] = unit(sub(pts[i + 1], pts[i - 1]), \"Via points\");\n    }\n    for (let i = 0; i < pts.length - 1; i++) {\n        if (len(sub(pts[i + 1], pts[i])) < 1e-6)\n            throw new Error(\"Two points along the wire are in the same place.\");\n    }\n    // One cubic Bezier per gap; control points sit along each tangent, a\n    // stiffness fraction of the gap away, so the curves meet smoothly.\n    const edges = [];\n    for (let i = 0; i < pts.length - 1; i++) {\n        const a = pts[i];\n        const b = pts[i + 1];\n        const reach = len(sub(b, a)) * stiff;\n        edges.push(replicad.makeBezierCurve([a, add(a, mul(tans[i], reach)), sub(b, mul(tans[i + 1], reach)), b]));\n    }\n    const spine = replicad.assembleWire(edges);\n    // Sweep a circle, square to the start direction, along the centerline.\n    const profile = () => replicad.assembleWire([replicad.makeCircle(diameter / 2, p0, d0)]);\n    let wire;\n    try {\n        wire = sweepDiscrete(profile(), spine);\n    }\n    catch (e) {\n        // The default (corrected Frenet) mode fails on these curves; Frenet works\n        // where the discrete trihedron doesn't.\n        wire = replicad.genericSweep(profile(), spine, { frenet: true });\n    }\n    const length = replicad.measureLength(spine);\n    console.log(`Wire length: ${length.toFixed(1)}`);\n    return new Assembly({ geometry: wire, tags: [\"wire\"] });\n}\n"
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.1818,
+      "uniqueID": "id-9771",
+      "name": "Start Shape",
+      "type": "edgeselect",
+      "options": [],
+      "selectedEdgeData": {}
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.267,
+      "uniqueID": "id-9774",
+      "name": "End Shape",
+      "type": "edgeselect",
+      "options": [],
+      "selectedEdgeData": {}
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.3523,
+      "uniqueID": "id-9777",
+      "name": "Start Point",
+      "type": "array",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.9333,
+      "uniqueID": "id-9780",
+      "name": "Start Direction",
+      "type": "array",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.9915,
+      "uniqueID": "id-9783",
+      "name": "End Point",
+      "type": "array",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.858,
+      "uniqueID": "id-9786",
+      "name": "End Direction",
+      "type": "array",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.7926,
+      "uniqueID": "id-9789",
+      "name": "Via Points",
+      "type": "string",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.6932,
+      "uniqueID": "id-9792",
+      "name": "Wire Diameter",
+      "type": "number",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.608,
+      "uniqueID": "id-9795",
+      "name": "Stiffness",
+      "type": "number",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.5256,
+      "uniqueID": "id-9798",
+      "name": "Flip Start",
+      "type": "boolean",
+      "options": []
+    },
+    {
+      "atomType": "Input",
+      "x": 0.055,
+      "y": 0.4347,
+      "uniqueID": "id-9801",
+      "name": "Flip End",
+      "type": "boolean",
+      "options": []
+    },
+    {
+      "atomType": "Color",
+      "x": 0.78,
+      "y": 0.5,
+      "uniqueID": "id-9804",
+      "ioValues": [
+        {
+          "name": "geometry",
+          "ioValue": "__GEOMETRY_INPUT__"
+        }
+      ],
+      "selectedColor": "Default"
     }
   ],
   "allConnectors": [
     {
-      "ap2Name": "number or geometry",
+      "ap2Name": "geometry",
       "ap1ID": "id-9739",
+      "ap2ID": "id-9804"
+    },
+    {
+      "ap2Name": "startShape",
+      "ap1ID": "id-9771",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "endShape",
+      "ap1ID": "id-9774",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "startPoint",
+      "ap1ID": "id-9777",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "startDirection",
+      "ap1ID": "id-9780",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "endPoint",
+      "ap1ID": "id-9783",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "endDirection",
+      "ap1ID": "id-9786",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "viaPoints",
+      "ap1ID": "id-9789",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "wireDiameter",
+      "ap1ID": "id-9792",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "stiffness",
+      "ap1ID": "id-9795",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "flipStart",
+      "ap1ID": "id-9798",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "flipEnd",
+      "ap1ID": "id-9801",
+      "ap2ID": "id-9739"
+    },
+    {
+      "ap2Name": "number or geometry",
+      "ap1ID": "id-9804",
       "ap2ID": "id-9639"
     }
   ],
